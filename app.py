@@ -1,42 +1,38 @@
-import streamlit as st
+import os
 import pandas as pd
-import matplotlib.pyplot as plt
-from kpi_utils import calculate_kpis, generate_summary
+from langchain.chat_models import ChatOpenAI  # ✅ correct import
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
 
-st.title("Automated KPI Dashboard Generator")
+def calculate_kpis(df):
+    df['Date'] = pd.to_datetime(df['Date'])
+    df = df.sort_values('Date')
 
-uploaded_file = st.file_uploader("Upload your sales CSV or Excel file", type=["csv", "xlsx"])
-if uploaded_file:
-    if uploaded_file.name.endswith(".csv"):
-        df = pd.read_csv(uploaded_file)
-    else:
-        df = pd.read_excel(uploaded_file)
+    df['MRR'] = df['Revenue']
+    df['Customers'] = df['New Customers'].cumsum() - df['Churned Customers'].cumsum()
+    df['Churn Rate'] = df['Churned Customers'] / (df['Customers'].shift(1) + 1)
+    df['Churn Rate'] = df['Churn Rate'].fillna(0)
+    df['Growth'] = df['Revenue'].pct_change().fillna(0) * 100
 
-    st.write("Raw data:", df.head())
+    return df[['Date', 'Revenue', 'Churn Rate', 'MRR', 'Growth']]
 
-    kpis = calculate_kpis(df)
+def generate_summary(kpis):
+    prompt = PromptTemplate(
+        input_variables=["kpi_table"],
+        template=(
+            "Here is a summary of a startup's monthly KPIs:\n\n{kpi_table}\n\n"
+            "Write a clear, concise summary highlighting revenue trends, churn rate, MRR, and growth percentage."
+        )
+    )
 
-    st.subheader("KPI Visualizations")
-    fig, ax = plt.subplots(2, 2, figsize=(12, 8))
+    kpi_str = kpis.tail(3).to_string(index=False)
 
-    # Revenue plot
-    ax[0, 0].plot(kpis['Date'], kpis['Revenue'])
-    ax[0, 0].set_title('Monthly Revenue')
+    llm = ChatOpenAI(
+        model_name="gpt-3.5-turbo",   # ✅ correct for chat models
+        temperature=0,
+        openai_api_key=os.getenv("OPENAI_API_KEY")
+    )
 
-    # Churn plot
-    ax[0, 1].plot(kpis['Date'], kpis['Churn Rate'])
-    ax[0, 1].set_title('Monthly Churn Rate')
-
-    # MRR plot
-    ax[1, 0].plot(kpis['Date'], kpis['MRR'])
-    ax[1, 0].set_title('Monthly Recurring Revenue (MRR)')
-
-    # Growth plot
-    ax[1, 1].plot(kpis['Date'], kpis['Growth'])
-    ax[1, 1].set_title('Monthly Growth %')
-
-    st.pyplot(fig)
-
-    st.subheader("KPI Summary")
-    summary = generate_summary(kpis)
-    st.write(summary)
+    chain = LLMChain(llm=llm, prompt=prompt)
+    summary = chain.run(kpi_table=kpi_str)
+    return summary
