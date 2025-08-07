@@ -33,7 +33,7 @@ def generate_summary(kpis):
     # Convert KPIs to string table
     kpi_str = kpis.tail(3).to_string(index=False)
 
-    llm = OpenAI(temperature=0)
+    llm = OpenAI(model_name="gpt-3.5-turbo", temperature=0)
     chain = LLMChain(llm=llm, prompt=prompt)
     summary = chain.run(kpi_table=kpi_str)
     return summary
