@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from langchain.llms import OpenAI 
-# use langchain_community import
+
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 
