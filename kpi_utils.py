@@ -24,6 +24,7 @@ def calculate_kpis(df):
     return df[['Date', 'Revenue', 'Churn Rate', 'MRR', 'Growth']]
 
 def generate_summary(kpis):
+    
     prompt = PromptTemplate(
         input_variables=["kpi_table"],
         template=(
@@ -34,9 +35,8 @@ def generate_summary(kpis):
     kpi_str = kpis.tail(3).to_string(index=False)
 
     llm = OpenAI(
-        model="gpt-3.5-turbo",
-        temperature=0,
-        openai_api_key=os.getenv("OPENAI_API_KEY")
+        model_name="gpt-3.5-turbo",
+        temperature=0
     )
     chain = LLMChain(llm=llm, prompt=prompt)
     summary = chain.run(kpi_table=kpi_str)
