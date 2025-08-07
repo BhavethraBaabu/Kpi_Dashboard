@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from langchain.chat_models import ChatOpenAI  # ✅ correct import
+from langchain.chat_models import ChatOpenAI  
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 
@@ -28,7 +28,7 @@ def generate_summary(kpis):
     kpi_str = kpis.tail(3).to_string(index=False)
 
     llm = ChatOpenAI(
-        model_name="gpt-3.5-turbo",   # ✅ correct for chat models
+        model_name="gpt-3.5-turbo",   
         temperature=0,
         openai_api_key=os.getenv("OPENAI_API_KEY")
     )
