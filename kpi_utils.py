@@ -1,5 +1,6 @@
+import os
 import pandas as pd
-from langchain import OpenAI
+from langchain_community.llms import OpenAI  # use langchain_community import
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 
@@ -22,7 +23,7 @@ def calculate_kpis(df):
     return df[['Date', 'Revenue', 'Churn Rate', 'MRR', 'Growth']]
 
 def generate_summary(kpis):
-   prompt = PromptTemplate(
+    prompt = PromptTemplate(
         input_variables=["kpi_table"],
         template=(
             "Here is a summary of a startup's monthly KPIs:\n\n{kpi_table}\n\n"
